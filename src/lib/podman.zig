@@ -17,7 +17,9 @@ pub fn getContainerJSON(allocator: std.mem.Allocator, id: []const u8) (std.proce
         "{{ json . }}",
         id,
     };
-    return try call(allocator, &inspect_argv);
+    const result = try call(allocator, &inspect_argv);
+    log.debug("getContainerJSON received the following from podman: {s}", .{result});
+    return result;
 }
 
 pub fn getContainerListJSON(allocator: std.mem.Allocator, key: []const u8) (std.process.Child.RunError || errors.PodmanErrors)![]const u8 {
@@ -33,7 +35,9 @@ pub fn getContainerListJSON(allocator: std.mem.Allocator, key: []const u8) (std.
     };
     defer allocator.free(get_argv[get_argv.len - 1]);
 
-    return try call(allocator, &get_argv);
+    const result = try call(allocator, &get_argv);
+    log.debug("getContainerListJSON received the following from podman: {s}", .{result});
+    return result;
 }
 
 test "getContainerListJSON leaktest" {
@@ -49,7 +53,9 @@ pub fn getImageJSON(allocator: std.mem.Allocator, id: []const u8) (std.process.C
         "{{ json . }}",
         id,
     };
-    return try call(allocator, &inspect_argv);
+    const result = try call(allocator, &inspect_argv);
+    log.debug("getImageJSON received the following from podman: {s}", .{result});
+    return result;
 }
 
 pub fn getImageListJSON(allocator: std.mem.Allocator) (std.process.Child.RunError || errors.PodmanErrors)![]const u8 {
@@ -61,7 +67,9 @@ pub fn getImageListJSON(allocator: std.mem.Allocator) (std.process.Child.RunErro
         "--filter",
         "label=" ++ label,
     };
-    return try call(allocator, &get_argv);
+    const result = try call(allocator, &get_argv);
+    log.debug("getImageListJSON received the following from podman: {s}", .{result});
+    return result;
 }
 
 test "getImageListJSON leaktest" {
@@ -161,6 +169,7 @@ pub fn deleteImage(allocator: std.mem.Allocator, id: []const u8, force: bool) (s
     };
     const argv = base_argv ++ if (force) [_][]const u8{"--force"} else [_][]const u8{} ++ [_][]const u8{id};
     const stdout = try call(allocator, argv);
+    log.debug("deleteImage received the following from podman: {s}", .{stdout});
     allocator.free(stdout);
 }
 
@@ -178,6 +187,7 @@ pub fn deleteContainer(allocator: std.mem.Allocator, id: []const u8, force: bool
     });
     defer allocator.free(argv);
     const stdout = try call(allocator, argv);
+    log.debug("deleteContainer received the following from podman: {s}", .{stdout});
     allocator.free(stdout);
 }
 
@@ -189,6 +199,7 @@ pub fn startContainer(allocator: std.mem.Allocator, id: []const u8) (std.process
         id,
     };
     const stdout = try call(allocator, &argv);
+    log.debug("startContainer received the following from podman: {s}", .{stdout});
     allocator.free(stdout);
 }
 
@@ -201,6 +212,7 @@ pub fn stopContainer(allocator: std.mem.Allocator, id: []const u8) (std.process.
         id,
     };
     const stdout = try call(allocator, &argv);
+    log.debug("stopContainer received the following from podman: {s}", .{stdout});
     allocator.free(stdout);
 }
 
@@ -238,6 +250,7 @@ pub fn createContainer(args: struct {
 
     // should just return the argv as a string under testing
     const result = if (!builtin.is_test) try call(args.allocator, argv) else try std.mem.concat(args.allocator, u8, argv);
+    log.debug("createContainer received the following from podman: {s}", .{result});
     errdefer args.allocator.free(result);
     if (result.len > 0) {
         if (result[result.len - 1] == '\n') {
