@@ -102,7 +102,7 @@ pub fn openLibnexpodStorage(allocator: std.mem.Allocator, key: []const u8) error
     const check_version_argv = [_][]const u8{ "podman", "version" };
     var child = std.process.Child.init(&check_version_argv, allocator);
     child.stdin_behavior = .Ignore;
-    child.stdout_behavior = .Ignore;
+    child.stdout_behavior = .Pipe;
     child.stderr_behavior = .Ignore;
     child.spawn() catch |err| switch (err) {
         // Windows-Only
@@ -122,6 +122,24 @@ pub fn openLibnexpodStorage(allocator: std.mem.Allocator, key: []const u8) error
         // Podman not found
         error.PermissionDenied, error.FileNotFound => return errors.PodmanErrors.PodmanNotFound,
     };
+    {
+        const version = child.stdout.?.readToEndAlloc(allocator, std.math.maxInt(usize)) catch |err| switch (err) {
+            error.IsDir,
+            error.NotOpenForReading,
+            error.SocketNotConnected,
+            error.ConnectionResetByPeer,
+            error.ConnectionTimedOut,
+            error.WouldBlock,
+            error.BrokenPipe,
+            error.InputOutput,
+            error.OperationAborted,
+            error.FileTooBig,
+            => unreachable,
+            else => |rest| return rest,
+        };
+        defer allocator.free(version);
+        log.debug("podman version: {s}", .{version});
+    }
     const result = child.wait() catch |err| switch (err) {
         // Windows-Only
         error.InvalidName,

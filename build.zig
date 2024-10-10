@@ -108,17 +108,17 @@ pub fn build(b: *std.Build) !void {
     // for lib
     const lib_unit_tests = b.step("libunittests", "Run only the unit tests for the library");
     try addTestCases(b, lib_unit_tests, "src/lib", &lib_modules, &target, &optimize, true);
-    test_step.dependOn(lib_unit_tests);
+    unittest_step.dependOn(lib_unit_tests);
 
     // for shim
     const shim_unit_tests = b.step("shimunittests", "Run only the unit tests of the shim");
     try addTestCases(b, shim_unit_tests, "src/shim", &[_]Module{}, &target, &optimize, false);
-    test_step.dependOn(shim_unit_tests);
+    unittest_step.dependOn(shim_unit_tests);
 
     // for daemon
     const daemon_unit_tests = b.step("daemonunittests", "Run only the unit tests of the daemon");
     try addTestCases(b, daemon_unit_tests, "src/daemon", &daemon_modules, &target, &optimize, false);
-    test_step.dependOn(daemon_unit_tests);
+    unittest_step.dependOn(daemon_unit_tests);
 
     // system tests
     const systemtest_step = b.step("systemtests", "Run system tests");

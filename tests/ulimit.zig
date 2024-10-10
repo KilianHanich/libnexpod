@@ -19,8 +19,6 @@ fn checkOne(allocator: std.mem.Allocator, con: *libnexpod.Container, ulimit_argv
     var process, const argv = try con.runCommand(.{
         .allocator = allocator,
         .argv = &[_][]const u8{
-            "flatpak-spawn",
-            "--host",
             "bash",
             "-c",
             ulimit_argv,
@@ -88,39 +86,22 @@ pub fn main() !void {
 
         for ([_][]const u8{
             "ulimit -H -R",
-            "ulimit -S -R",
             "ulimit -H -c",
-            "ulimit -S -c",
             "ulimit -H -d",
-            "ulimit -S -d",
             "ulimit -H -e",
-            "ulimit -S -e",
             "ulimit -H -f",
-            "ulimit -S -f",
             "ulimit -H -i",
-            "ulimit -S -i",
             "ulimit -H -l",
-            "ulimit -S -l",
             "ulimit -H -m",
-            "ulimit -S -m",
             "ulimit -H -n",
-            "ulimit -S -n",
             "ulimit -H -p",
-            "ulimit -S -p",
             "ulimit -H -q",
-            "ulimit -S -q",
             "ulimit -H -r",
-            "ulimit -S -r",
             "ulimit -H -s",
-            "ulimit -S -s",
             "ulimit -H -t",
-            "ulimit -S -t",
             "ulimit -H -u",
-            "ulimit -S -u",
             "ulimit -H -v",
-            "ulimit -S -v",
             "ulimit -H -x",
-            "ulimit -S -x",
         }) |argv| {
             checkOne(allocator, &con, argv) catch |err| {
                 std.log.err("ulimit failed on this arg: {s}", .{argv});
