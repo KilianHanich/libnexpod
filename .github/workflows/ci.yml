@@ -1,0 +1,10 @@
+name: "CI"
+on:
+  workflow_dispatch:
+
+jobs:
+  archlinux:
+    uses: ./.github/workflows/ci-run-template.yml
+    with:
+      image-tag: latest
+      image-name: archlinux
