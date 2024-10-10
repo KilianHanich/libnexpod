@@ -12,7 +12,7 @@ fn logFilter(
     comptime format: []const u8,
     args: anytype,
 ) void {
-    if (scope == .libnexpod) {
+    if (scope == .libnexpod and level != .debug) {
         libnexpod_logs += 1;
     } else {
         std.log.defaultLog(level, scope, format, args);
