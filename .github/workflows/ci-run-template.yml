@@ -1,0 +1,48 @@
+name: "CI with One Image"
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        description: "name of the to be used image"
+        required: true
+        type: string
+      image-tag:
+        description: "tag of the to be used image"
+        required: true
+        type: string
+
+jobs:
+  CIRun:
+    runs-on: ubuntu-24.04
+    steps:
+    - run: echo "IMAGE_NAME=libnexpod-test-${{ inputs.image-name }}" >>$GITHUB_ENV
+    - uses: actions/checkout@v4
+    - name: "host dependency"
+      run: |
+        sudo apt-get update
+        sudo apt-get upgrade
+        sudo apt-get install flatpak
+    - uses: redhat-actions/buildah-build@v2
+      name: "build image"
+      with:
+        image: ${{ env.IMAGE_NAME }}
+        tags: ${{ inputs.image-tag }}
+        containerfiles: images/${{ inputs.image-name }}/Containerfile
+        context: images/${{ inputs.image-name }}
+    - uses: mlugg/setup-zig@v1
+      with:
+        version: 0.13.0
+    - name: "Debug"
+      run: |
+        zig build
+        zig build test
+    - name: "Release"
+      run: |
+        zig build --release
+        zig build test --release
+    - name: "Cleanup"
+      if: always()
+      run: |
+        podman image rm --force ${{ env.IMAGE_NAME }}
+        podman image prune --all --force
