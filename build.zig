@@ -108,17 +108,17 @@ pub fn build(b: *std.Build) !void {
     // for lib
     const lib_unit_tests = b.step("libunittests", "Run only the unit tests for the library");
     try addTestCases(b, lib_unit_tests, "src/lib", &lib_modules, &target, &optimize, true);
-    test_step.dependOn(lib_unit_tests);
+    unittest_step.dependOn(lib_unit_tests);
 
     // for shim
     const shim_unit_tests = b.step("shimunittests", "Run only the unit tests of the shim");
     try addTestCases(b, shim_unit_tests, "src/shim", &[_]Module{}, &target, &optimize, false);
-    test_step.dependOn(shim_unit_tests);
+    unittest_step.dependOn(shim_unit_tests);
 
     // for daemon
     const daemon_unit_tests = b.step("daemonunittests", "Run only the unit tests of the daemon");
     try addTestCases(b, daemon_unit_tests, "src/daemon", &daemon_modules, &target, &optimize, false);
-    test_step.dependOn(daemon_unit_tests);
+    unittest_step.dependOn(daemon_unit_tests);
 
     // system tests
     const systemtest_step = b.step("systemtests", "Run system tests");
@@ -162,9 +162,14 @@ fn addSystemTests(b: *std.Build, args: struct {
     libc: bool,
     daemon: *std.Build.Step.Compile,
 }) !void {
-    const setup_step = b.addSystemCommand(&[_][]const u8{
-        "tests/setup.sh",
+    const setup_check_build = b.addExecutable(.{
+        .name = "setup_check",
+        .root_source_file = b.path("tests/list-images.zig"),
+        .target = b.host,
+        .optimize = .ReleaseSafe,
     });
+    addModules(&setup_check_build.root_module, args.modules);
+    const setup_check = b.addRunArtifact(setup_check_build);
 
     var dir = try b.build_root.handle.openDir(args.dir_path, .{ .iterate = true });
     defer dir.close();
@@ -185,7 +190,7 @@ fn addSystemTests(b: *std.Build, args: struct {
         }
         addModules(&test_case.root_module, args.modules);
 
-        test_case.step.dependOn(&setup_step.step);
+        test_case.step.dependOn(&setup_check.step);
 
         var run_test_case = b.addRunArtifact(test_case);
         run_test_case.addFileArg(args.daemon.getEmittedBin());
